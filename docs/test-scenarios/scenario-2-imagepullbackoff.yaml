@@ -1,0 +1,30 @@
+# Scenario 2 — ImagePullBackOff
+# Deployment references a non-existent image tag. The registry will return
+# a 404 / manifest not found, causing Kubernetes to enter ImagePullBackOff.
+#
+# Expected AI diagnosis:
+#   Root Cause : Invalid image tag — image cannot be pulled from registry
+#   Suggested Fix: Update the image tag to a valid published version
+#
+# Apply:   kubectl apply -f scenario-2-imagepullbackoff.yaml
+# Cleanup: kubectl delete -f scenario-2-imagepullbackoff.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: imagepull-demo
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: imagepull-demo
+  template:
+    metadata:
+      labels:
+        app: imagepull-demo
+    spec:
+      containers:
+        - name: imagepull-demo
+          # This tag does not exist — intentional for testing
+          image: nginx:this-tag-does-not-exist-99999

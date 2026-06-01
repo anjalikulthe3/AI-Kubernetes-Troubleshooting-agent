@@ -1,0 +1,43 @@
+# Scenario 3 — OOMKilled
+# Container allocates more memory than its limit allows.
+# The kernel OOM killer will terminate it; Kubernetes reports OOMKilled.
+#
+# Expected AI diagnosis:
+#   Root Cause : Container exceeded memory limit
+#   Suggested Fix: Increase memory requests/limits in the deployment
+#
+# Apply:   kubectl apply -f scenario-3-oomkilled.yaml
+# Cleanup: kubectl delete -f scenario-3-oomkilled.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oom-demo
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oom-demo
+  template:
+    metadata:
+      labels:
+        app: oom-demo
+    spec:
+      containers:
+        - name: oom-demo
+          image: polinux/stress:latest
+          # Allocate 256 MB but limit is only 64 MB — will be OOMKilled
+          args:
+            - stress
+            - --vm
+            - "1"
+            - --vm-bytes
+            - 256M
+            - --vm-hang
+            - "0"
+          resources:
+            requests:
+              memory: "32Mi"
+            limits:
+              memory: "64Mi"

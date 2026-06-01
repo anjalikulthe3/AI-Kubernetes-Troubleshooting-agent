@@ -1,0 +1,46 @@
+# Scenario 4 — Service Selector Mismatch
+# The Service selector uses the label `app: backend-wrong` but the Deployment
+# pods carry `app: backend`. The Service will have 0 endpoints and traffic
+# will never reach the pods.
+#
+# Expected AI diagnosis:
+#   Root Cause : Service selector does not match pod labels
+#   Suggested Fix: Update the service selector (or pod labels) so they match
+#
+# Apply:   kubectl apply -f scenario-4-selector-mismatch.yaml
+# Cleanup: kubectl delete -f scenario-4-selector-mismatch.yaml
+# Verify:  kubectl get endpoints selector-mismatch-svc
+#          (should show <none> endpoints)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selector-mismatch-app
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend        # ← pods carry THIS label
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.25
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: selector-mismatch-svc
+  namespace: default
+spec:
+  selector:
+    app: backend-wrong      # ← intentionally wrong — no pods match
+  ports:
+    - port: 80
+      targetPort: 80
